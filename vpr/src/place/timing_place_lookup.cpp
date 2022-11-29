@@ -210,7 +210,7 @@ std::unique_ptr<PlaceDelayModel> compute_place_delay_model(const t_placer_opts& 
     }
 
     /*free all data structures that are no longer needed */
-    free_routing_structs(net_list);
+    free_routing_structs();
 
     return place_delay_model;
 }

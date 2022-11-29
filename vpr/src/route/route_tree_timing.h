@@ -6,86 +6,65 @@
 #include "spatial_route_tree_lookup.h"
 #include "timing_util.h"
 
-/**************** Subroutines exported by route_tree_timing.c ***************/
+/**************** Subroutines exported by route_tree_timing.cpp ***************/
 
-//Returns true if allocated
-bool alloc_route_tree_timing_structs(bool exists_ok = false);
+RouteTree init_route_tree_to_source(ParentNetId inet);
 
-void free_route_tree_timing_structs();
+void print_route_tree(const RouteTreeNode& rt_node);
+void print_route_tree(const RouteTreeNode& rt_node, int depth);
 
-t_rt_node* init_route_tree_to_source(const ParentNetId& inet);
-
-/*
- * Puts the rt_nodes and edges in the tree rooted at rt_node back on the
- * free lists.  Recursive, depth-first post-order traversal.
- */
-void free_route_tree(t_rt_node* rt_node);
-void print_route_tree(const t_rt_node* rt_node);
-void print_route_tree(const t_rt_node* rt_node, int depth);
-
-t_rt_node* update_route_tree(t_heap* hptr, int target_net_pin_index, SpatialRouteTreeLookup* spatial_rt_lookup, bool is_flat);
+std::tuple<vtr::optional<RouteTreeNode&>, vtr::optional<RouteTreeNode&>> update_route_tree(RouteTree& tree,
+                                                                                           t_heap* hptr,
+                                                                                           int target_net_pin_index,
+                                                                                           SpatialRouteTreeLookup* spatial_rt_lookup,
+                                                                                           bool is_flat);
 
 void update_net_delays_from_route_tree(float* net_delay,
                                        const Netlist<>& net_list,
-                                       const t_rt_node* const* rt_node_of_sink,
+                                       std::vector<vtr::optional<RouteTreeNode&>>& rt_node_of_sink,
                                        ParentNetId inet,
                                        TimingInfo* timing_info,
                                        NetPinTimingInvalidator* pin_timing_invalidator);
 
-void load_route_tree_Tdel(t_rt_node* rt_root, float Tarrival);
-void load_route_tree_rr_route_inf(t_rt_node* root);
+void load_route_tree_Tdel(RouteTreeNode& rt_root, float Tarrival);
+void load_route_tree_rr_route_inf(RouteTreeNode& rt_root);
 
-t_rt_node* init_route_tree_to_source_no_net(int inode);
+bool verify_route_tree(const RouteTreeNode& rt_node);
 
-void add_route_tree_to_rr_node_lookup(t_rt_node* node);
-
-bool verify_route_tree(t_rt_node* root);
-bool verify_traceback_route_tree_equivalent(const t_trace* trace_head, const t_rt_node* rt_root);
-
-t_rt_node* find_sink_rt_node(const Netlist<>& net_list, t_rt_node* rt_root, ParentNetId net_id, ParentPinId sink_pin);
-t_rt_node* find_sink_rt_node_recurr(t_rt_node* node, int sink_inode);
+RouteTreeNode& find_sink_rt_node(const Netlist<>& net_list, RouteTreeNode& rt_root, ParentNetId net_id, ParentPinId sink_pin);
+vtr::optional<RouteTreeNode&> find_sink_rt_node_recurr(RouteTreeNode& node, RRNodeId sink_rr_inode);
 
 /********** Incremental reroute ***********/
 // instead of ripping up a net that has some congestion, cut the branches
 // that don't legally lead to a sink and start routing with that partial route tree
 
-void print_edge(const t_linked_rt_edge* edge);
-void print_route_tree_node(const t_rt_node* rt_root);
-void print_route_tree_inf(const t_rt_node* rt_root);
-void print_route_tree_congestion(const t_rt_node* rt_root);
-
-t_rt_node* traceback_to_route_tree(ParentNetId inet, bool is_flat);
-
-t_rt_node* traceback_to_route_tree(ParentNetId inet, std::vector<int>* non_config_node_set_usage, bool is_flat);
-t_rt_node* traceback_to_route_tree(t_trace* head, bool is_flat);
-t_rt_node* traceback_to_route_tree(t_trace* head,
-                                   std::vector<int>* non_config_node_set_usage,
-                                   bool is_flat);
-
-t_trace* traceback_from_route_tree(ParentNetId inet,
-                                   const t_rt_node* root,
-                                   int num_routed_sinks);
+void print_route_tree_node(const RouteTreeNode& rt_node);
+void print_route_tree_inf(const RouteTreeNode& rt_node);
+void print_route_tree_congestion(const RouteTreeNode& rt_node);
 
 // Prune route tree
 //
 //  Note that non-configurable node will not be pruned unless the node is
 //  being totally ripped up, or the node is congested.
-t_rt_node* prune_route_tree(t_rt_node* rt_root, CBRR& connections_inf);
+vtr::optional<RouteTree&> prune_route_tree(RouteTree& tree, CBRR& connections_inf);
 
 // Prune route tree
 //
 //  Note that non-configurable nodes will be pruned if
 //  non_config_node_set_usage is provided.  prune_route_tree will update
 //  non_config_node_set_usage after pruning.
-t_rt_node* prune_route_tree(t_rt_node* rt_root,
-                            CBRR& connections_inf,
-                            std::vector<int>* non_config_node_set_usage);
+vtr::optional<RouteTree&> prune_route_tree(RouteTree& tree, CBRR& connections_inf, std::vector<int>* non_config_node_set_usage);
 
-void pathfinder_update_cost_from_route_tree(const t_rt_node* rt_root, int add_or_sub);
+/* Count configurable edges to non-configurable node sets. (rr_nonconf_node_sets index -> int)
+ * Required when using prune_route_tree to prune non-configurable nodes. */
+std::vector<int> get_non_config_node_set_usage(const RouteTree& tree);
 
-bool is_equivalent_route_tree(const t_rt_node* rt_root, const t_rt_node* cloned_rt_root);
-bool is_valid_skeleton_tree(const t_rt_node* rt_root);
-bool is_valid_route_tree(const t_rt_node* rt_root);
-bool is_uncongested_route_tree(const t_rt_node* root);
-float load_new_subtree_C_downstream(t_rt_node* rt_node);
-void load_new_subtree_R_upstream(t_rt_node* rt_node);
+/* Move to other pathfinder functions */
+void pathfinder_update_cost_from_route_tree(const RouteTreeNode& rt_node, int add_or_sub);
+
+bool is_equivalent_route_tree(const RouteTreeNode& rt_node1, const RouteTreeNode& rt_node2);
+bool is_valid_skeleton_tree(const RouteTreeNode& rt_node);
+bool is_valid_route_tree(const RouteTreeNode& rt_node);
+bool is_uncongested_route_tree(const RouteTreeNode& rt_node);
+float load_new_subtree_C_downstream(RouteTreeNode& rt_node);
+void load_new_subtree_R_upstream(vtr::optional<RouteTreeNode&> rt_node);
