@@ -83,25 +83,13 @@ void RouteTreeNode::update_parent_links(void) {
 /* Copy child to the back of _child_nodes.
  * Returns a reference to the added node. */
 RouteTreeNode& RouteTreeNode::add_child(const RouteTreeNode& x) {
-    _child_nodes.push_back(x);
-    RouteTreeNode& new_node = _child_nodes.back();
-    if (root)
-        root.value().rr_node_to_rt_node[x.inode] = new_node;
-    new_node.parent = *this; // Zeroed out after copy constructor
-    new_node.root = root;
-    return new_node;
+    return emplace_child(x);
 }
 
 /* Copy child to the front of _child_nodes.
  * Returns a reference to the added node. */
 RouteTreeNode& RouteTreeNode::add_child_front(const RouteTreeNode& x) {
-    _child_nodes.push_front(x);
-    RouteTreeNode& new_node = _child_nodes.front();
-    if (root)
-        root.value().rr_node_to_rt_node[x.inode] = new_node;
-    new_node.parent = *this; // Zeroed out after copy constructor
-    new_node.root = root;
-    return new_node;
+    return emplace_child_front(x);
 }
 
 /* Remove child node by value. O(N) operation. */

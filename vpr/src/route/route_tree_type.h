@@ -75,6 +75,18 @@ class RouteTreeNode {
      * Returns a reference to the added node. */
     RouteTreeNode& add_child_front(const RouteTreeNode&);
 
+    /* Emplace child to the back of _child_nodes.
+     * For best performance, call with constructor args
+     * (will construct the node in the parent's list directly and save a copy) */
+    template<class... Args>
+    RouteTreeNode& emplace_child(Args&& ...args);
+
+    /* Emplace child to the front of _child_nodes.
+     * For best performance, call with constructor args
+     * (will construct the node in the parent's list directly and save a copy) */
+    template<class... Args>
+    RouteTreeNode& emplace_child_front(Args&& ...args);
+
     /* Remove child node by value. O(N) operation. */
     void remove_child(const RouteTreeNode&);
 
@@ -166,3 +178,33 @@ class RTIterator {
     /* The root node of the iterator. Useful for comparisons. */
     vtr::optional<const RouteTreeNode&> _root;
 };
+
+/* Emplace child to the back of _child_nodes.
+ * For best performance, call with constructor args
+ * (will construct the node in the parent's list directly and save a copy)
+ * Implemented in this file to enable template deduction */
+template<class... Args>
+RouteTreeNode& RouteTreeNode::emplace_child(Args&& ...args){
+    _child_nodes.emplace_back(std::forward<Args>(args)...);
+    RouteTreeNode& new_node = _child_nodes.back();
+    if (root)
+        root.value().rr_node_to_rt_node[new_node.inode] = new_node;
+    new_node.parent = *this; // Zeroed out after copy constructor
+    new_node.root = root;
+    return new_node;
+}
+
+/* Emplace child to the back of _child_nodes.
+ * For best performance, call with constructor args
+ * (will construct the node in the parent's list directly and save a copy)
+ * Implemented in this file to enable template deduction */
+template<class... Args>
+RouteTreeNode& RouteTreeNode::emplace_child_front(Args&& ...args){
+    _child_nodes.emplace_front(std::forward<Args>(args)...);
+    RouteTreeNode& new_node = _child_nodes.front();
+    if (root)
+        root.value().rr_node_to_rt_node[new_node.inode] = new_node;
+    new_node.parent = *this; // Zeroed out after copy constructor
+    new_node.root = root;
+    return new_node;
+}

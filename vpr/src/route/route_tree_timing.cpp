@@ -41,7 +41,7 @@ static void add_non_configurable_to_route_tree(RouteTreeNode& parent,
 
 static RouteTreeNode& update_unbuffered_ancestors_C_downstream(RouteTreeNode& start_of_new_subtree_rt_node);
 
-bool verify_route_tree_recurr(RouteTreeNode& rt_node, std::set<RRNodeId>& seen_nodes);
+bool verify_route_tree_recurr(const RouteTreeNode& rt_node, std::set<RRNodeId>& seen_nodes);
 
 static vtr::optional<RouteTreeNode&> prune_route_tree_recurr(RouteTreeNode& node,
                                                              CBRR& connections_inf,
@@ -131,8 +131,6 @@ add_subtree_to_route_tree(RouteTree& tree, t_heap* hptr, int target_net_pin_inde
 
     RRNodeId sink_inode = RRNodeId(hptr->index);
 
-    auto& rr_node_to_rt_node = tree.rr_node_to_rt_node;
-
     /* Walk rr_node_route_inf up until we reach an existing RouteTreeNode */
     std::vector<RRNodeId> new_branch_inodes;
     std::vector<RRSwitchId> new_branch_iswitches;
@@ -150,7 +148,7 @@ add_subtree_to_route_tree(RouteTree& tree, t_heap* hptr, int target_net_pin_inde
     RRSwitchId new_iswitch = RRSwitchId(rr_graph.rr_nodes().edge_switch(edge));
 
     new_branch_inodes.push_back(sink_inode);
-    while (!rr_node_to_rt_node.count(new_inode)) {
+    while (!tree.rr_node_to_rt_node.count(new_inode)) {
         new_branch_inodes.push_back(new_inode);
         new_branch_iswitches.push_back(new_iswitch);
         edge = route_ctx.rr_node_route_inf[size_t(new_inode)].prev_edge;
@@ -159,11 +157,11 @@ add_subtree_to_route_tree(RouteTree& tree, t_heap* hptr, int target_net_pin_inde
     }
     new_branch_iswitches.push_back(new_iswitch);
 
-    RouteTreeNode& found_rt_node = rr_node_to_rt_node.at(new_inode).value();
+    RouteTreeNode& found_rt_node = tree.rr_node_to_rt_node.at(new_inode).value();
 
     /* Build a new tree branch starting from the existing node we found */
-    RouteTreeNode* last_node_ptr = &found_rt_node;
-    all_visited.insert(last_node_ptr->inode);
+    vtr::optional<RouteTreeNode&> last_node = found_rt_node;
+    all_visited.insert(last_node->inode);
 
     /* In the code below I'm marking SINKs and IPINs as not to be re-expanded.
      * It makes the code more efficient (though not vastly) to prune this way
@@ -171,22 +169,20 @@ add_subtree_to_route_tree(RouteTree& tree, t_heap* hptr, int target_net_pin_inde
      * ---
      * Walk through new_branch_iswitches and corresponding new_branch_inodes. */
     for (int i = new_branch_inodes.size() - 1; i >= 0; i--) {
-        /* have to create a tmp_node because add_child copies the node --> reference changes */
-        RouteTreeNode tmp_node(new_branch_inodes[i], new_branch_iswitches[i], *last_node_ptr, tree);
+        RouteTreeNode& new_node = last_node.value().emplace_child(new_branch_inodes[i], new_branch_iswitches[i], last_node, tree);
 
         e_rr_type node_type = rr_graph.node_type(new_branch_inodes[i]);
         // If is_flat is enabled, IPINs should be added, since they are used for intra-cluster routing
         if (node_type == IPIN && !is_flat) {
-            tmp_node.re_expand = false;
+            new_node.re_expand = false;
         } else if (node_type == SINK) {
-            tmp_node.re_expand = false;
-            tmp_node.net_pin_index = target_net_pin_index; // net pin index is invalid for non-SINK nodes
+            new_node.re_expand = false;
+            new_node.net_pin_index = target_net_pin_index; // net pin index is invalid for non-SINK nodes
         } else {
-            tmp_node.re_expand = true;
+            new_node.re_expand = true;
         }
 
-        RouteTreeNode& new_node = last_node_ptr->add_child(tmp_node);
-        last_node_ptr = &new_node;
+        last_node = new_node;
 
         main_branch_visited.insert(new_branch_inodes[i]);
         all_visited.insert(new_branch_inodes[i]);
@@ -196,13 +192,13 @@ add_subtree_to_route_tree(RouteTree& tree, t_heap* hptr, int target_net_pin_inde
     // non-configurably connected nodes
     // Sink is not included, so no need to pass in the node's ipin value.
     for (RRNodeId rr_node : main_branch_visited) {
-        add_non_configurable_to_route_tree(rr_node_to_rt_node.at(rr_node).value(), false, all_visited, is_flat);
+        add_non_configurable_to_route_tree(tree.rr_node_to_rt_node.at(rr_node).value(), false, all_visited, is_flat);
     }
 
     /* the first and last nodes we added.
      * vec[size-1] works, because new_branch_inodes is guaranteed to contain at least [sink, found_node] */
-    vtr::optional<RouteTreeNode&> downstream_rt_node = rr_node_to_rt_node.at(new_branch_inodes[new_branch_inodes.size() - 1]);
-    vtr::optional<RouteTreeNode&> sink_rt_node = rr_node_to_rt_node.at(new_branch_inodes[0]);
+    vtr::optional<RouteTreeNode&> downstream_rt_node = tree.rr_node_to_rt_node.at(new_branch_inodes[new_branch_inodes.size() - 1]);
+    vtr::optional<RouteTreeNode&> sink_rt_node = tree.rr_node_to_rt_node.at(new_branch_inodes[0]);
 
     return {downstream_rt_node, sink_rt_node};
 }
@@ -233,15 +229,13 @@ static void add_non_configurable_to_route_tree(RouteTreeNode& rt_node,
 
         RRSwitchId edge_switch(rr_graph.edge_switch(rr_node, iedge));
 
-        /* have to create a tmp_node because add_child_front copies the node --> reference changes */
-        RouteTreeNode tmp_node = RouteTreeNode(to_rr_node, edge_switch, rt_node, rt_node.root);
-        tmp_node.net_pin_index = OPEN;
+        RouteTreeNode& new_node = rt_node.emplace_child_front(to_rr_node, edge_switch, rt_node, rt_node.root);
+        new_node.net_pin_index = OPEN;
         if (rr_graph.node_type(RRNodeId(to_rr_node)) == IPIN && !is_flat) {
-            tmp_node.re_expand = false;
+            new_node.re_expand = false;
         } else {
-            tmp_node.re_expand = true;
+            new_node.re_expand = true;
         }
-        RouteTreeNode& new_node = rt_node.add_child_front(tmp_node);
 
         add_non_configurable_to_route_tree(new_node, true, visited, is_flat);
     }
@@ -401,12 +395,12 @@ void load_route_tree_rr_route_inf(RouteTreeNode& rt_node) {
     }
 }
 
-bool verify_route_tree(RouteTreeNode& rt_root) {
+bool verify_route_tree(const RouteTreeNode& rt_root) {
     std::set<RRNodeId> seen_nodes;
     return verify_route_tree_recurr(rt_root, seen_nodes);
 }
 
-bool verify_route_tree_recurr(RouteTreeNode& rt_node, std::set<RRNodeId>& seen_nodes) {
+bool verify_route_tree_recurr(const RouteTreeNode& rt_node, std::set<RRNodeId>& seen_nodes) {
     if (seen_nodes.count(rt_node.inode)) {
         VPR_FATAL_ERROR(VPR_ERROR_ROUTE, "Duplicate route tree nodes found for node %d", rt_node.inode);
     }
