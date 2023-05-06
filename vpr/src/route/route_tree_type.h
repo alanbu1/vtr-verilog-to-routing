@@ -79,13 +79,13 @@ class RouteTreeNode {
      * For best performance, call with constructor args
      * (will construct the node in the parent's list directly and save a copy) */
     template<class... Args>
-    RouteTreeNode& emplace_child(Args&& ...args);
+    RouteTreeNode& emplace_child(Args&&... args);
 
     /* Emplace child to the front of _child_nodes.
      * For best performance, call with constructor args
      * (will construct the node in the parent's list directly and save a copy) */
     template<class... Args>
-    RouteTreeNode& emplace_child_front(Args&& ...args);
+    RouteTreeNode& emplace_child_front(Args&&... args);
 
     /* Remove child node by value. O(N) operation. */
     void remove_child(const RouteTreeNode&);
@@ -184,7 +184,7 @@ class RTIterator {
  * (will construct the node in the parent's list directly and save a copy)
  * Implemented in this file to enable template deduction */
 template<class... Args>
-RouteTreeNode& RouteTreeNode::emplace_child(Args&& ...args){
+RouteTreeNode& RouteTreeNode::emplace_child(Args&&... args) {
     _child_nodes.emplace_back(std::forward<Args>(args)...);
     RouteTreeNode& new_node = _child_nodes.back();
     if (root)
@@ -199,7 +199,7 @@ RouteTreeNode& RouteTreeNode::emplace_child(Args&& ...args){
  * (will construct the node in the parent's list directly and save a copy)
  * Implemented in this file to enable template deduction */
 template<class... Args>
-RouteTreeNode& RouteTreeNode::emplace_child_front(Args&& ...args){
+RouteTreeNode& RouteTreeNode::emplace_child_front(Args&&... args) {
     _child_nodes.emplace_front(std::forward<Args>(args)...);
     RouteTreeNode& new_node = _child_nodes.front();
     if (root)
