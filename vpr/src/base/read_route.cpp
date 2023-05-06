@@ -228,8 +228,8 @@ static void process_nodes(std::ifstream& fp, ClusterNetId inet, const char* file
     auto& route_ctx = g_vpr_ctx.mutable_routing();
     auto& place_ctx = g_vpr_ctx.placement();
 
-    t_trace* head_ptr;
-    t_trace* tptr;
+    t_trace* head_ptr = nullptr;
+    t_trace* tptr = nullptr;
 
     /*remember the position of the last line in order to go back*/
     std::streampos oldpos = fp.tellg();
