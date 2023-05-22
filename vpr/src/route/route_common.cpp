@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "vtr_assert.h"
 #include "vtr_util.h"
 #include "vtr_log.h"

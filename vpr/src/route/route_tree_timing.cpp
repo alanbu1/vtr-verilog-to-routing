@@ -16,7 +16,7 @@
 #include "globals.h"
 #include "route_common.h"
 #include "route_tree_timing.h"
-#include "route_tree_type.h"
+#include "route_tree.h"
 
 #include "vtr_optional.h"
 
@@ -169,7 +169,7 @@ add_subtree_to_route_tree(RouteTree& tree, t_heap* hptr, int target_net_pin_inde
      * ---
      * Walk through new_branch_iswitches and corresponding new_branch_inodes. */
     for (int i = new_branch_inodes.size() - 1; i >= 0; i--) {
-        RouteTreeNode& new_node = last_node.value().emplace_child(new_branch_inodes[i], new_branch_iswitches[i], last_node, tree);
+        RouteTreeNode& new_node = last_node.value().emplace_child_front(new_branch_inodes[i], new_branch_iswitches[i], last_node, tree);
 
         e_rr_type node_type = rr_graph.node_type(new_branch_inodes[i]);
         // If is_flat is enabled, IPINs should be added, since they are used for intra-cluster routing
@@ -215,8 +215,7 @@ static void add_non_configurable_to_route_tree(RouteTreeNode& rt_node,
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
 
-    VTR_ASSERT(rt_node.root);
-    auto& rr_node_to_rt_node = rt_node.root.value().rr_node_to_rt_node;
+    auto& rr_node_to_rt_node = rt_node.tree.value().rr_node_to_rt_node;
     const RRNodeId rr_node = rt_node.inode;
 
     for (int iedge : rr_graph.non_configurable_edges(rr_node)) {
@@ -229,9 +228,9 @@ static void add_non_configurable_to_route_tree(RouteTreeNode& rt_node,
 
         RRSwitchId edge_switch(rr_graph.edge_switch(rr_node, iedge));
 
-        RouteTreeNode& new_node = rt_node.emplace_child_front(to_rr_node, edge_switch, rt_node, rt_node.root);
+        RouteTreeNode& new_node = rt_node.emplace_child_front(to_rr_node, edge_switch, rt_node, rt_node.tree);
         new_node.net_pin_index = OPEN;
-        if (rr_graph.node_type(RRNodeId(to_rr_node)) == IPIN && !is_flat) {
+        if (rr_graph.node_type(to_rr_node) == IPIN && !is_flat) {
             new_node.re_expand = false;
         } else {
             new_node.re_expand = true;

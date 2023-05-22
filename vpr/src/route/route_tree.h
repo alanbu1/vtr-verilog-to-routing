@@ -54,12 +54,12 @@ class RouteTreeNode {
     RouteTreeNode& operator=(const RouteTreeNode&);
     RouteTreeNode& operator=(RouteTreeNode&&);
 
-    RouteTreeNode(RRNodeId inode, RRSwitchId parent_switch, vtr::optional<RouteTreeNode&> parent, vtr::optional<RouteTree&> root);
+    RouteTreeNode(RRNodeId inode, RRSwitchId parent_switch, vtr::optional<RouteTreeNode&> parent, vtr::optional<RouteTree&> tree);
 
     RRNodeId inode;
     RRSwitchId parent_switch;
     vtr::optional<RouteTreeNode&> parent;
-    vtr::optional<RouteTree&> root;
+    vtr::optional<RouteTree&> tree;
     bool re_expand;
     int net_pin_index;
     float C_downstream;
@@ -187,10 +187,10 @@ template<class... Args>
 RouteTreeNode& RouteTreeNode::emplace_child(Args&&... args) {
     _child_nodes.emplace_back(std::forward<Args>(args)...);
     RouteTreeNode& new_node = _child_nodes.back();
-    if (root)
-        root.value().rr_node_to_rt_node[new_node.inode] = new_node;
+    if (tree)
+        tree.value().rr_node_to_rt_node[new_node.inode] = new_node;
     new_node.parent = *this; // Zeroed out after copy constructor
-    new_node.root = root;
+    new_node.tree = tree;
     return new_node;
 }
 
@@ -202,9 +202,9 @@ template<class... Args>
 RouteTreeNode& RouteTreeNode::emplace_child_front(Args&&... args) {
     _child_nodes.emplace_front(std::forward<Args>(args)...);
     RouteTreeNode& new_node = _child_nodes.front();
-    if (root)
-        root.value().rr_node_to_rt_node[new_node.inode] = new_node;
+    if (tree)
+        tree.value().rr_node_to_rt_node[new_node.inode] = new_node;
     new_node.parent = *this; // Zeroed out after copy constructor
-    new_node.root = root;
+    new_node.tree = tree;
     return new_node;
 }

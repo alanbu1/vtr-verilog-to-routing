@@ -15,7 +15,7 @@
 #include "rr_graph.h"
 #include "check_rr_graph.h"
 #include "read_xml_arch_file.h"
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "route_tree_timing.h"
 
 /******************** Subroutines local to this module **********************/

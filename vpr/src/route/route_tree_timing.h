@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "connection_based_routing.h"
 #include "route_common.h"
 #include "spatial_route_tree_lookup.h"

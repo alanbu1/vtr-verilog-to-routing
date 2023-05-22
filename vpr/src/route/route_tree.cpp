@@ -1,13 +1,13 @@
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "globals.h"
 
 /* Construct a new RouteTreeNode.
  * Doesn't add the node to parent's child_nodes! (see add_child) */
-RouteTreeNode::RouteTreeNode(RRNodeId _inode, RRSwitchId _parent_switch, vtr::optional<RouteTreeNode&> _parent, vtr::optional<RouteTree&> _root)
+RouteTreeNode::RouteTreeNode(RRNodeId _inode, RRSwitchId _parent_switch, vtr::optional<RouteTreeNode&> _parent, vtr::optional<RouteTree&> _tree)
     : inode(_inode)
     , parent_switch(_parent_switch)
     , parent(_parent)
-    , root(_root) {
+    , tree(_tree) {
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
 
@@ -53,7 +53,7 @@ RouteTreeNode& RouteTreeNode::operator=(const RouteTreeNode& rhs) {
     R_upstream = rhs.R_upstream;
     Tdel = rhs.Tdel;
     _child_nodes = rhs._child_nodes;
-    root = vtr::nullopt;
+    tree = vtr::nullopt;
     parent = vtr::nullopt;
     update_parent_links();
     return *this;
@@ -68,7 +68,7 @@ RouteTreeNode& RouteTreeNode::operator=(RouteTreeNode&& rhs) {
     R_upstream = rhs.R_upstream;
     Tdel = rhs.Tdel;
     _child_nodes = std::move(rhs._child_nodes);
-    root = vtr::nullopt;
+    tree = vtr::nullopt;
     parent = vtr::nullopt;
     update_parent_links();
     return *this;
@@ -94,8 +94,8 @@ RouteTreeNode& RouteTreeNode::add_child_front(const RouteTreeNode& x) {
 
 /* Remove child node by value. O(N) operation. */
 void RouteTreeNode::remove_child(const RouteTreeNode& x) {
-    if (root)
-        root.value().rr_node_to_rt_node.erase(x.inode);
+    if (tree)
+        tree.value().rr_node_to_rt_node.erase(x.inode);
     _child_nodes.remove(x);
 }
 
@@ -103,8 +103,8 @@ void RouteTreeNode::remove_child(const RouteTreeNode& x) {
  * If in a for loop, take care about the iterator state:
  * https://stackoverflow.com/questions/596162 */
 void RouteTreeNode::remove_child(std::list<RouteTreeNode>::iterator& it) {
-    if (root)
-        root.value().rr_node_to_rt_node.erase(it->inode);
+    if (tree)
+        tree.value().rr_node_to_rt_node.erase(it->inode);
     it = _child_nodes.erase(it);
 }
 
@@ -113,8 +113,8 @@ void RouteTreeNode::remove_child(std::list<RouteTreeNode>::iterator& it) {
 void RouteTreeNode::remove_child_if(const std::function<bool(RouteTreeNode&)>& p) {
     _child_nodes.remove_if([&](auto& child) {
         if (p(child)) {
-            if (root) {
-                root.value().rr_node_to_rt_node.erase(child.inode);
+            if (tree) {
+                tree.value().rr_node_to_rt_node.erase(child.inode);
             }
             return true;
         } else {
@@ -174,7 +174,7 @@ RouteTree::iterator RouteTree::end(void) const {
 
 /* Walk the tree, re-populate rr_node_to_rt_node and root. */
 void RouteTree::update_references(RouteTreeNode& rt_node) {
-    rt_node.root = *this;
+    rt_node.tree = *this;
     rr_node_to_rt_node[rt_node.inode] = rt_node;
     for (auto& child : rt_node.child_nodes()) {
         update_references(child);

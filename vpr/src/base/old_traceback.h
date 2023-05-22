@@ -1,6 +1,6 @@
 #pragma once
 
-#include "route_tree_type.h"
+#include "route_tree.h"
 
 /* Contains the old traceback structure for compatibility with .route files.
  * Use route/route_tree_type.h for new code. */

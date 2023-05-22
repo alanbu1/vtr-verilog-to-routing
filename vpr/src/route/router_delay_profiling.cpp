@@ -4,7 +4,7 @@
 #include "route_timing.h"
 #include "route_tree_timing.h"
 #include "route_export.h"
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "rr_graph.h"
 #include "vtr_time.h"
 #include "draw.h"

@@ -883,6 +883,7 @@ void ConnectionRouter<Heap>::add_route_tree_to_heap(
     int target_node,
     const t_conn_cost_params cost_params,
     bool from_high_fanout) {
+
     /* Puts the entire partial routing below and including rt_node onto the heap *
      * (except for those parts marked as not to be expanded) by calling itself   *
      * recursively.                                                              */
@@ -892,6 +893,7 @@ void ConnectionRouter<Heap>::add_route_tree_to_heap(
     } else {
         router_stats_->add_all_rt++;
     }
+
     /* Pre-order depth-first traversal */
     // IPINs and SINKS are not re_expanded
     if (rt_node.re_expand) {
@@ -931,14 +933,12 @@ void ConnectionRouter<Heap>::add_route_tree_node_to_heap(
     const t_conn_cost_params cost_params,
     bool is_high_fanout) {
     const auto& device_ctx = g_vpr_ctx.device();
-    int inode = size_t(rt_node.inode);
-    VTR_LOGV_DEBUG(router_debug_, "cost_params.criticality=%g rt_node.Tdel=%g astar_fac=%g rt_node.R_upstream=%g get_expected_cost=%g\n", cost_params.criticality, rt_node.Tdel, cost_params.astar_fac, rt_node.R_upstream, router_lookahead_.get_expected_cost(RRNodeId(inode), RRNodeId(target_node), cost_params, rt_node.R_upstream));
+    const RRNodeId inode = rt_node.inode;
     float backward_path_cost = cost_params.criticality * rt_node.Tdel;
-
     float R_upstream = rt_node.R_upstream;
 
-    //after budgets are loaded, calculate delay cost as described by RCV paper
-    /*R. Fung, V. Betz and W. Chow, "Slack Allocation and Routing to Improve FPGA Timing While
+    // after budgets are loaded, calculate delay cost as described by RCV paper
+    /* R. Fung, V. Betz and W. Chow, "Slack Allocation and Routing to Improve FPGA Timing While
      * Repairing Short-Path Violations," in IEEE Transactions on Computer-Aided Design of
      * Integrated Circuits and Systems, vol. 27, no. 4, pp. 686-697, April 2008.*/
     // float expected_cost = router_lookahead_.get_expected_cost(inode, target_node, cost_params, R_upstream);
@@ -947,22 +947,22 @@ void ConnectionRouter<Heap>::add_route_tree_node_to_heap(
         // tot_cost = backward_path_cost + cost_params.astar_fac * expected_cost;
         float tot_cost = backward_path_cost
                          + cost_params.astar_fac
-                               * router_lookahead_.get_expected_cost(RRNodeId(inode),
+                               * router_lookahead_.get_expected_cost(inode,
                                                                      RRNodeId(target_node),
                                                                      cost_params,
                                                                      R_upstream);
         VTR_LOGV_DEBUG(router_debug_, "  Adding node %8d to heap from init route tree with cost %g (%s)\n",
                        inode,
                        tot_cost,
-                       describe_rr_node(device_ctx.rr_graph, device_ctx.grid, device_ctx.rr_indexed_data, inode, is_flat_).c_str());
+                       describe_rr_node(device_ctx.rr_graph, device_ctx.grid, device_ctx.rr_indexed_data, size_t(inode), is_flat_).c_str());
 
         push_back_node(&heap_, rr_node_route_inf_,
-                       inode, tot_cost, NO_PREVIOUS, RREdgeId::INVALID(),
+                       size_t(inode), tot_cost, NO_PREVIOUS, RREdgeId::INVALID(),
                        backward_path_cost, R_upstream);
     } else {
-        float expected_total_cost = compute_node_cost_using_rcv(cost_params, inode, target_node, rt_node.Tdel, 0, R_upstream);
+        float expected_total_cost = compute_node_cost_using_rcv(cost_params, size_t(inode), target_node, rt_node.Tdel, 0, R_upstream);
 
-        push_back_node_with_info(&heap_, inode, expected_total_cost,
+        push_back_node_with_info(&heap_, size_t(inode), expected_total_cost,
                                  backward_path_cost, R_upstream, rt_node.Tdel, &rcv_path_manager);
     }
 
@@ -1041,19 +1041,19 @@ t_bb ConnectionRouter<Heap>::add_high_fanout_route_tree_to_heap(
                 if (!rt_node.re_expand) continue; //Some nodes (like IPINs) shouldn't be re-expanded
                 RRNodeId rr_node_to_add = rt_node.inode;
 
-                //Put the node onto the heap
                 if (is_flat_) {
                     if (!relevant_node_to_target(rr_graph_, rr_node_to_add, target_node_id))
                         continue;
                 }
 
+                // Put the node onto the heap
                 add_route_tree_node_to_heap(rt_node, target_node, cost_params, true);
-                //Update Bounding Box
-                RRNodeId node(rt_node.inode);
-                highfanout_bb.xmin = std::min<int>(highfanout_bb.xmin, rr_graph_->node_xlow(node));
-                highfanout_bb.ymin = std::min<int>(highfanout_bb.ymin, rr_graph_->node_ylow(node));
-                highfanout_bb.xmax = std::max<int>(highfanout_bb.xmax, rr_graph_->node_xhigh(node));
-                highfanout_bb.ymax = std::max<int>(highfanout_bb.ymax, rr_graph_->node_yhigh(node));
+
+                // Update Bounding Box
+                highfanout_bb.xmin = std::min<int>(highfanout_bb.xmin, rr_graph_->node_xlow(rr_node_to_add));
+                highfanout_bb.ymin = std::min<int>(highfanout_bb.ymin, rr_graph_->node_ylow(rr_node_to_add));
+                highfanout_bb.xmax = std::max<int>(highfanout_bb.xmax, rr_graph_->node_xhigh(rr_node_to_add));
+                highfanout_bb.ymax = std::max<int>(highfanout_bb.ymax, rr_graph_->node_yhigh(rr_node_to_add));
                 if (is_flat_) {
                     if (rr_graph_->node_type(rr_node_to_add) == CHANY || rr_graph_->node_type(rr_node_to_add) == CHANX) {
                         chan_nodes_added++;

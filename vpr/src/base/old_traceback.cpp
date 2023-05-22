@@ -2,7 +2,6 @@
 
 #include "clustered_netlist_fwd.h"
 #include "globals.h"
-#include "route_tree_type.h"
 #include "vtr_assert.h"
 
 #include <vector>
@@ -41,7 +40,7 @@ static void traceback_to_route_tree_x(t_trace* trace, RouteTreeNode& parent, RRS
     const auto& rr_graph = device_ctx.rr_graph;
     RRNodeId inode = RRNodeId(trace->index);
 
-    RouteTreeNode tmp_node(inode, parent_switch, parent, parent.root);
+    RouteTreeNode tmp_node(inode, parent_switch, parent, parent.tree);
     tmp_node.net_pin_index = trace->net_pin_index;
     tmp_node.R_upstream = std::numeric_limits<float>::quiet_NaN();
     tmp_node.C_downstream = std::numeric_limits<float>::quiet_NaN();
@@ -58,7 +57,7 @@ static void traceback_to_route_tree_x(t_trace* trace, RouteTreeNode& parent, RRS
         /* The traceback returns to the previous branch point if there is more than one SINK, else we are at the base case */
         if (trace->next) {
             RRNodeId next_rr_node = RRNodeId(trace->next->index);
-            RouteTreeNode& branch = parent.root.value().rr_node_to_rt_node.at(next_rr_node).value();
+            RouteTreeNode& branch = parent.tree.value().rr_node_to_rt_node.at(next_rr_node).value();
             VTR_ASSERT(trace->next->next);
             traceback_to_route_tree_x(trace->next->next, branch, RRSwitchId(trace->next->iswitch));
         }

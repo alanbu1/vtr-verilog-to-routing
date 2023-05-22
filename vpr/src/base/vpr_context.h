@@ -23,7 +23,7 @@
 #include "device_grid.h"
 #include "clock_network_builders.h"
 #include "clock_connection_builders.h"
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "router_lookahead.h"
 #include "place_macro.h"
 #include "compressed_grid.h"

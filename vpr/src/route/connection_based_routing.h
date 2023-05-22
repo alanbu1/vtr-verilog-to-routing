@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "vpr_types.h"
 #include "timing_info.h"
 #include "vpr_net_pins_matrix.h"

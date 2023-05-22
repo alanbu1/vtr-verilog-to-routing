@@ -6,7 +6,7 @@
 #include "vtr_ndmatrix.h"
 
 #include "netlist.h"
-#include "route_tree_type.h"
+#include "route_tree.h"
 
 typedef vtr::Matrix<std::vector<std::reference_wrapper<const RouteTreeNode>>> SpatialRouteTreeLookup;
 

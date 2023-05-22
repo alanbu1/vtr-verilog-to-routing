@@ -1498,7 +1498,8 @@ static void setup_routing_resources(int itry,
         if (!tree)
             tree = init_route_tree_to_source(net_id);
 
-        /* copy the existing routing */
+        /* copy the existing routing
+         * OPT: skip this copy */
         RouteTree tree2 = tree.value();
 
         // check for edge correctness
@@ -1518,17 +1519,20 @@ static void setup_routing_resources(int itry,
 
             // Add back congestion for the pruned route tree
             pathfinder_update_cost_from_route_tree(pruned_tree.value().root, 1);
-            tree = pruned_tree.value();
-        } else { //Fully destroyed
+            // pruned_tree is no longer required -> we can move rather than copy
+            tree = std::move(pruned_tree.value());
+        } else { // Fully destroyed
             profiling::route_tree_pruned();
 
-            //Initialize only to source
+            // Initialize only to source
             tree = init_route_tree_to_source(net_id);
         }
 
         // Update R/C
+        /*
         load_new_subtree_R_upstream(tree.value().root);
         load_new_subtree_C_downstream(tree.value().root);
+        */
 
         VTR_ASSERT(reached_sinks.size() + remaining_targets.size() == num_sinks);
 
