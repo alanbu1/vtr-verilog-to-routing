@@ -31,10 +31,9 @@
 #include "RoutingDelayCalculator.h"
 #include "place_and_route.h"
 #include "router_delay_profiling.h"
-#include "route_tree_type.h"
+#include "route_tree.h"
 #include "route_common.h"
 #include "route_timing.h"
-#include "route_tree_timing.h"
 #include "route_export.h"
 #include "rr_graph.h"
 #include "rr_graph2.h"
@@ -118,7 +117,7 @@ static void do_one_route(const Netlist<>& net_list,
                                      -1,
                                      false,
                                      std::unordered_map<RRNodeId, int>());
-    std::tie(found_path, cheapest) = router.timing_driven_route_connection_from_route_tree(tree.root,
+    std::tie(found_path, cheapest) = router.timing_driven_route_connection_from_route_tree(tree.root(),
                                                                                                     sink_node,
                                                                                                     cost_params,
                                                                                                     bounding_box,
@@ -129,20 +128,18 @@ static void do_one_route(const Netlist<>& net_list,
         VTR_ASSERT(cheapest.index == sink_node);
 
         vtr::optional<RouteTreeNode&> rt_node_of_sink;
-        std::tie(std::ignore, rt_node_of_sink) = update_route_tree(tree, &cheapest, OPEN, nullptr, router_opts.flat_routing);
+        std::tie(std::ignore, rt_node_of_sink) = tree.update_from_heap(&cheapest, OPEN, nullptr, router_opts.flat_routing);
 
         //find delay
         float net_delay = rt_node_of_sink.value().Tdel;
         VTR_LOG("Routed successfully, delay = %g!\n", net_delay);
         VTR_LOG("\n");
-        print_route_tree_node(tree.root);
-        VTR_LOG("\n");
-        print_route_tree(tree.root);
+        tree.print();
         VTR_LOG("\n");
 
-        VTR_ASSERT_MSG(route_ctx.rr_node_route_inf[size_t(tree.root.inode)].occ() <= rr_graph.node_capacity(tree.root.inode), "SOURCE should never be congested");
+        VTR_ASSERT_MSG(route_ctx.rr_node_route_inf[size_t(tree.root().inode)].occ() <= rr_graph.node_capacity(tree.root().inode), "SOURCE should never be congested");
     } else {
-        VTR_LOG("Routed failed");
+        VTR_LOG("Routing failed");
     }
 
     //Reset for the next router call

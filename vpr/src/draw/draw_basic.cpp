@@ -37,8 +37,6 @@
 #include "route_export.h"
 #include "tatum/report/TimingPathCollector.hpp"
 
-#include "route_tree_timing.h"
-
 #ifdef VTR_ENABLE_DEBUG_LOGGING
 #    include "move_utils.h"
 #endif
@@ -550,7 +548,7 @@ void draw_routed_net(ParentNetId net_id, ezgl::renderer* g) {
         return;
 
     std::vector<int> rr_nodes_to_draw;
-    for (auto& rt_node : route_ctx.route_trees[net_id].value()) {
+    for (auto& rt_node : route_ctx.route_trees[net_id].value().all_nodes()) {
         int inode = size_t(rt_node.inode);
 
         if (draw_if_net_highlighted(convert_to_cluster_net_id(net_id))) {

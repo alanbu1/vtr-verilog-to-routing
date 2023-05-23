@@ -1,5 +1,4 @@
 #include "connection_router.h"
-#include "route_tree_timing.h"
 #include "rr_graph.h"
 
 #include "binary_heap.h"
@@ -110,12 +109,12 @@ t_heap* ConnectionRouter<Heap>::timing_driven_route_connection_common_setup(
                                                                 bounding_box);
 
     if (cheapest == nullptr) {
-        //Found no path found within the current bounding box.
-        //Try again with no bounding box (i.e. a full device grid bounding box).
+        // No path found within the current bounding box.
+        // Try again with no bounding box (i.e. a full device grid bounding box).
         //
-        //Note that the additional run-time overhead of re-trying only occurs
-        //when we were otherwise going to give up -- the typical case (route
-        //found with the bounding box) remains fast and never re-tries .
+        // Note that the additional run-time overhead of re-trying only occurs
+        // when we were otherwise going to give up -- the typical case (route
+        // found with the bounding box) remains fast and never re-tries .
         VTR_LOG_WARN("No routing path for connection to sink_rr %d, retrying with full device bounding box\n", sink_node);
 
         t_bb full_device_bounding_box;

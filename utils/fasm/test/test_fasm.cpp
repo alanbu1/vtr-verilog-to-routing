@@ -2,7 +2,6 @@
 #include "catch2/matchers/catch_matchers_all.hpp"
 
 #include "route_common.h"
-#include "route_tree_timing.h"
 #include "vpr_api.h"
 #include "vtr_util.h"
 #include "rr_metadata.h"

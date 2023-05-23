@@ -6,7 +6,6 @@
 #include "globals.h"
 #include "net_delay.h"
 #include "place_and_route.h"
-#include "route_tree_timing.h"
 #include "timing_place_lookup.h"
 
 static constexpr const char kArchFile[] = "../../vtr_flow/arch/timing/k6_frac_N10_mem32K_40nm.xml";
@@ -68,7 +67,7 @@ static float do_one_route(int source_node,
                                      -1,
                                      false,
                                      std::unordered_map<RRNodeId, int>());
-    std::tie(found_path, cheapest) = router.timing_driven_route_connection_from_route_tree(tree.root,
+    std::tie(found_path, cheapest) = router.timing_driven_route_connection_from_route_tree(tree.root(),
                                                                                            sink_node,
                                                                                            cost_params,
                                                                                            bounding_box,
@@ -83,7 +82,7 @@ static float do_one_route(int source_node,
 
         // Get the delay
         vtr::optional<RouteTreeNode&> rt_node_of_sink;
-        std::tie(std::ignore, rt_node_of_sink) = update_route_tree(tree, &cheapest, OPEN, nullptr, router_opts.flat_routing);
+        std::tie(std::ignore, rt_node_of_sink) = tree.update_from_heap(&cheapest, OPEN, nullptr, router_opts.flat_routing);
         delay = rt_node_of_sink.value().Tdel;
     }
 

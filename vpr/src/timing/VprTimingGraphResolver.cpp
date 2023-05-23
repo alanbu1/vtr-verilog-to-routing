@@ -292,14 +292,13 @@ void VprTimingGraphResolver::get_detailed_interconnect_components(std::vector<ta
     if (!route_ctx.route_trees[net_id])
         return;
 
-    RouteTreeNode& rt_root = route_ctx.route_trees[net_id].value().root;
+    auto& netlist = is_flat_ ? (const Netlist<> &)g_vpr_ctx.atom().nlist : (const Netlist<> &)g_vpr_ctx.clustering().clb_nlist;
 
-    vtr::optional<RouteTreeNode&> rt_sink;
-    if (is_flat_) {
-        rt_sink = find_sink_rt_node((const Netlist<>&)g_vpr_ctx.atom().nlist, rt_root, net_id, (ParentPinId&)sink_pin); // find the sink matching sink_pin
-    } else {
-        rt_sink = find_sink_rt_node((const Netlist<>&)g_vpr_ctx.clustering().clb_nlist, rt_root, net_id, (ParentPinId&)sink_pin); // find the sink matching sink_pin
-    }
+    int ipin = netlist.pin_net_index(sink_pin);
+    RRNodeId sink_rr_inode = RRNodeId(route_ctx.net_rr_terminals[net_id][ipin]); //obtain the value of the routing resource sink
+
+    auto rt_sink = route_ctx.route_trees[net_id].value().find_by_rr_id(sink_rr_inode);
+
     get_detailed_interconnect_components_helper(components, rt_sink.value()); //from sink, walk up to source and add net components
 }
 

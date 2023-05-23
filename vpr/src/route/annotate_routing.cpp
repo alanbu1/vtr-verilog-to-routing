@@ -11,8 +11,6 @@
 #include "rr_graph.h"
 #include "annotate_routing.h"
 
-#include "route_tree_timing.h"
-
 /********************************************************************
  * Create a mapping between each rr_node and its mapped nets
  * based on VPR routing results
@@ -42,7 +40,7 @@ vtr::vector<RRNodeId, ParentNetId> annotate_rr_node_nets(const Netlist<>& net_li
             continue;
         }
 
-        for (auto& rt_node : routing_ctx.route_trees[net_id].value()) {
+        for (auto& rt_node : routing_ctx.route_trees[net_id].value().all_nodes()) {
             const RRNodeId rr_node = rt_node.inode;
             /* Ignore source and sink nodes, they are the common node multiple starting and ending points */
             if ((SOURCE != rr_graph.node_type(rr_node))

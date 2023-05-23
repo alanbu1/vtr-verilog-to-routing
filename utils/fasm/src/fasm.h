@@ -22,7 +22,7 @@
 #include "netlist_writer.h"
 #include "lut.h"
 #include "parameters.h"
-#include "route_tree_type.h"
+#include "route_tree_fwd.h"
 
 namespace fasm {
 

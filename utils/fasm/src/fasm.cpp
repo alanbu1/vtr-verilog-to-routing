@@ -22,7 +22,6 @@
 #include "atom_netlist_utils.h"
 #include "netlist_writer.h"
 #include "vpr_utils.h"
-#include "route_tree_timing.h"
 
 #include "fasm_utils.h"
 
@@ -641,7 +640,7 @@ void FasmWriterVisitor::walk_routing() {
 
     for(const auto &tree : route_ctx.route_trees) {
         if (!tree) continue;
-        walk_route_tree(device_ctx.rr_graph_builder, tree.value().root);
+        walk_route_tree(device_ctx.rr_graph_builder, tree.value().root());
     }
 }
 

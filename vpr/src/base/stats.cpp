@@ -27,8 +27,6 @@
 #include "timing_util.h"
 #include "tatum/TimingReporter.hpp"
 
-#include "route_tree_timing.h"
-
 /********************** Subroutines local to this module *********************/
 
 static void load_channel_occupancies(const Netlist<>& net_list,
@@ -265,7 +263,7 @@ static void load_channel_occupancies(const Netlist<>& net_list,
         if (!tree)
             continue;
 
-        for (auto& rt_node : tree.value()) {
+        for (auto& rt_node : tree.value().all_nodes()) {
             RRNodeId inode = rt_node.inode;
             t_rr_type rr_type = rr_graph.node_type(inode);
 
@@ -305,7 +303,7 @@ void get_num_bends_and_length(ParentNetId inet, int* bends_ptr, int* len_ptr, in
                         "in get_num_bends_and_length: net #%lu has no routing.\n", size_t(inet));
     }
 
-    for (auto& rt_node : tree.value()) {
+    for (auto& rt_node : tree.value().all_nodes()) {
         RRNodeId inode = rt_node.inode;
         t_rr_type curr_type = rr_graph.node_type(inode);
 

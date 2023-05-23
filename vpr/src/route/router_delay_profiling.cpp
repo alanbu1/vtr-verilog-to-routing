@@ -2,7 +2,6 @@
 #include "globals.h"
 #include "route_common.h"
 #include "route_timing.h"
-#include "route_tree_timing.h"
 #include "route_export.h"
 #include "route_tree.h"
 #include "rr_graph.h"
@@ -73,7 +72,7 @@ bool RouterDelayProfiler::calculate_delay(int source_node, int sink_node, const 
                                      false,
                                      std::unordered_map<RRNodeId, int>());
     std::tie(found_path, cheapest) = router_.timing_driven_route_connection_from_route_tree(
-        tree.root,
+        tree.root(),
         sink_node,
         cost_params,
         bounding_box,
@@ -84,12 +83,12 @@ bool RouterDelayProfiler::calculate_delay(int source_node, int sink_node, const 
         VTR_ASSERT(cheapest.index == sink_node);
 
         vtr::optional<RouteTreeNode&> rt_node_of_sink;
-        std::tie(std::ignore, rt_node_of_sink) = update_route_tree(tree, &cheapest, OPEN, nullptr, is_flat_);
+        std::tie(std::ignore, rt_node_of_sink) = tree.update_from_heap(&cheapest, OPEN, nullptr, is_flat_);
 
         //find delay
         *net_delay = rt_node_of_sink->Tdel;
 
-        VTR_ASSERT_MSG(route_ctx.rr_node_route_inf[size_t(tree.root.inode)].occ() <= rr_graph.node_capacity(tree.root.inode), "SOURCE should never be congested");
+        VTR_ASSERT_MSG(route_ctx.rr_node_route_inf[size_t(tree.root().inode)].occ() <= rr_graph.node_capacity(tree.root().inode), "SOURCE should never be congested");
     }
 
     //VTR_LOG("Explored %zu of %zu (%.2f) RR nodes: path delay %g\n", router_stats.heap_pops, device_ctx.rr_nodes.size(), float(router_stats.heap_pops) / device_ctx.rr_nodes.size(), *net_delay);
@@ -143,7 +142,7 @@ std::vector<float> calculate_all_path_delays_from_rr_node(int src_rr_node,
         is_flat);
     RouterStats router_stats;
     ConnectionParameters conn_params(ParentNetId::INVALID(), OPEN, false, std::unordered_map<RRNodeId, int>());
-    std::vector<t_heap> shortest_paths = router.timing_driven_find_all_shortest_paths_from_route_tree(tree.root,
+    std::vector<t_heap> shortest_paths = router.timing_driven_find_all_shortest_paths_from_route_tree(tree.root(),
                                                                                                       cost_params,
                                                                                                       bounding_box,
                                                                                                       router_stats,
@@ -161,7 +160,7 @@ std::vector<float> calculate_all_path_delays_from_rr_node(int src_rr_node,
             //Build the routing tree to get the delay
             tree = RouteTree(RRNodeId(src_rr_node));
             vtr::optional<RouteTreeNode&> rt_node_of_sink;
-            std::tie(std::ignore, rt_node_of_sink) = update_route_tree(tree, &shortest_paths[sink_rr_node], OPEN, nullptr, router_opts.flat_routing);
+            std::tie(std::ignore, rt_node_of_sink) = tree.update_from_heap(&shortest_paths[sink_rr_node], OPEN, nullptr, router_opts.flat_routing);
 
             VTR_ASSERT(rt_node_of_sink->inode == RRNodeId(sink_rr_node));
 

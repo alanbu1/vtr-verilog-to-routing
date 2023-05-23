@@ -19,7 +19,6 @@
 #include "globals.h"
 #include "place_and_route.h"
 #include "route_common.h"
-#include "route_tree_timing.h"
 #include "route_timing.h"
 #include "route_export.h"
 #include "rr_graph.h"

@@ -177,7 +177,7 @@ void highlight_nets(char* message, int hit_node, bool is_flat) {
             continue;
         ParentNetId parent_id = get_cluster_net_parent_id(g_vpr_ctx.atom().lookup, net_id, is_flat);
 
-        for (auto& rt_node : route_ctx.route_trees[parent_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[parent_id].value().all_nodes()) {
             int inode = size_t(rt_node.inode);
             if (draw_state->draw_rr_node[inode].color == ezgl::MAGENTA) {
                 draw_state->net_color[net_id] = draw_state->draw_rr_node[inode].color;

@@ -20,7 +20,6 @@
 #include "globals.h"
 #include "route_export.h"
 #include "route_common.h"
-#include "route_tree_timing.h"
 #include "route_timing.h"
 #include "place_and_route.h"
 #include "rr_graph.h"
@@ -135,7 +134,7 @@ void get_serial_num(const Netlist<>& net_list) {
         if (!route_ctx.route_trees[net_id])
             continue;
 
-        for (auto& rt_node : route_ctx.route_trees[net_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[net_id].value().all_nodes()) {
             RRNodeId inode = rt_node.inode;
             serial_num += (size_t(net_id) + 1)
                           * (rr_graph.node_xlow(inode) * (device_ctx.grid.width()) - rr_graph.node_yhigh(inode));
@@ -334,7 +333,7 @@ std::vector<std::set<ClusterNetId>> collect_rr_node_nets() {
     for (ClusterNetId inet : cluster_ctx.clb_nlist.nets()) {
         if (!route_ctx.route_trees[inet])
             continue;
-        for (auto& rt_node : route_ctx.route_trees[inet].value()) {
+        for (auto& rt_node : route_ctx.route_trees[inet].value().all_nodes()) {
             rr_node_nets[size_t(rt_node.inode)].insert(inet);
         }
     }
@@ -384,6 +383,15 @@ void pathfinder_update_acc_cost_and_overuse_info(float acc_fac, OveruseInfo& ove
     overuse_info.overused_nodes = overused_nodes;
     overuse_info.total_overuse = total_overuse;
     overuse_info.worst_overuse = worst_overuse;
+}
+
+/** Update pathfinder cost of all nodes rooted at rt_node, including rt_node itself */
+void pathfinder_update_cost_from_route_tree(const RouteTreeNode& rt_node, int add_or_sub) {
+    pathfinder_update_single_node_occupancy(size_t(rt_node.inode), add_or_sub);
+
+    for (auto& child : rt_node.child_nodes()) {
+        pathfinder_update_cost_from_route_tree(child, add_or_sub);
+    }
 }
 
 float update_pres_fac(float new_pres_fac) {
@@ -1042,7 +1050,7 @@ void print_invalid_routing_info(const Netlist<>& net_list, bool is_flat) {
         if (!route_ctx.route_trees[net_id])
             continue;
 
-        for (auto& rt_node : route_ctx.route_trees[net_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[net_id].value().all_nodes()) {
             rr_node_nets.emplace(size_t(rt_node.inode), net_id);
         }
     }

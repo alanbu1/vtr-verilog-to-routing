@@ -8,7 +8,6 @@
 
 #include "globals.h"
 #include "net_delay.h"
-#include "route_tree_timing.h"
 
 /* This module keeps track of the time delays for signals to arrive at       *
  * each pin in every net after timing-driven routing is complete. It         *
@@ -38,7 +37,7 @@ static void load_one_net_delay(const Netlist<>& net_list,
                                NetPinsMatrix<float>& net_delay,
                                ParentNetId net_id);
 
-static void load_one_net_delay_recurr(RouteTreeNode& node, ParentNetId net_id);
+static void load_one_net_delay_recurr(const RouteTreeNode& node, ParentNetId net_id);
 
 static void load_one_constant_net_delay(const Netlist<>& net_list,
                                         NetPinsMatrix<float>& net_delay,
@@ -82,10 +81,7 @@ static void load_one_net_delay(const Netlist<>& net_list,
     }
 
     RouteTree& tree = route_ctx.route_trees[net_id].value();
-    load_new_subtree_R_upstream(tree.root);       // load in the resistance values for the route tree
-    load_new_subtree_C_downstream(tree.root);     // load in the capacitance values for the route tree
-    load_route_tree_Tdel(tree.root, 0.);          // load the time delay values for the route tree
-    load_one_net_delay_recurr(tree.root, net_id); // recursively traverse the tree and load entries into the ipin_to_Tdel map
+    load_one_net_delay_recurr(tree.root(), net_id); // recursively traverse the tree and load entries into the ipin_to_Tdel map
 
     for (unsigned int ipin = 1; ipin < net_list.net_pins(net_id).size(); ipin++) {
         auto itr = ipin_to_Tdel_map.find(ipin);
@@ -96,7 +92,7 @@ static void load_one_net_delay(const Netlist<>& net_list,
     ipin_to_Tdel_map.clear(); // clear the map
 }
 
-static void load_one_net_delay_recurr(RouteTreeNode& rt_node, ParentNetId net_id) {
+static void load_one_net_delay_recurr(const RouteTreeNode& rt_node, ParentNetId net_id) {
     /* This routine recursively traverses the route tree, and copies the Tdel of the sink_type nodes *
      * into the map.                                                                                 */
     if (rt_node.net_pin_index != OPEN) {                        // value of OPEN indicates a non-SINK

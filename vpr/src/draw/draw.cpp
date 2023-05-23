@@ -841,14 +841,14 @@ std::vector<int> trace_routed_connection_rr_nodes(
     VTR_ASSERT(route_ctx.route_trees[net_id]);
     const RouteTree& tree = route_ctx.route_trees[net_id].value();
 
-    VTR_ASSERT(tree.root.inode == RRNodeId(route_ctx.net_rr_terminals[net_id][driver_pin]));
+    VTR_ASSERT(tree.root().inode == RRNodeId(route_ctx.net_rr_terminals[net_id][driver_pin]));
 
     int sink_rr_node = route_ctx.net_rr_terminals[ParentNetId(size_t(net_id))][sink_pin];
 
     std::vector<int> rr_nodes_on_path;
 
     //Collect the rr nodes
-    trace_routed_connection_rr_nodes_recurr(tree.root,
+    trace_routed_connection_rr_nodes_recurr(tree.root(),
                                             sink_rr_node,
                                             rr_nodes_on_path);
 

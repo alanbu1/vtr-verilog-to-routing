@@ -44,10 +44,10 @@
 #include "route_export.h"
 #include "echo_files.h"
 #include "route_common.h"
+#include "route_tree.h"
 #include "read_route.h"
 #include "binary_heap.h"
 
-#include "route_tree_timing.h"
 #include "old_traceback.h"
 
 /*************Functions local to this module*************/
@@ -408,11 +408,6 @@ static void process_nodes(std::ifstream& fp, ClusterNetId inet, const char* file
     VTR_ASSERT(validate_traceback(head_ptr));
     route_ctx.route_trees[inet] = traceback_to_route_tree(head_ptr);
     free_traceback(head_ptr);
-
-    RouteTreeNode& rt_root = route_ctx.route_trees[inet].value().root;
-    load_new_subtree_R_upstream(rt_root);   // load in the resistance values for the route
-    load_new_subtree_C_downstream(rt_root); // load in the capacitance values for the route tree
-    load_route_tree_Tdel(rt_root, 0.);      // load the time delay values for the route tree
 }
 
 /**

@@ -47,8 +47,6 @@
 #include "rr_graph.h"
 #include "vpr_utils.h"
 
-#include "route_tree_timing.h"
-
 /************************* DEFINES **********************************/
 #define CONVERT_NM_PER_M 1000000000
 #define CONVERT_UM_PER_M 1000000
@@ -815,7 +813,7 @@ static void power_usage_routing(t_power_usage* power_usage,
         ParentNetId parent_id = get_cluster_net_parent_id(g_vpr_ctx.atom().lookup, net_id, is_flat);
         if (!route_ctx.route_trees[parent_id])
             continue;
-        for (auto& rt_node : route_ctx.route_trees[parent_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[parent_id].value().all_nodes()) {
             rr_node_power[size_t(rt_node.inode)].visited = false;
             rr_node_power[size_t(rt_node.inode)].net_num = net_id;
         }
@@ -826,7 +824,7 @@ static void power_usage_routing(t_power_usage* power_usage,
         ParentNetId parent_id = get_cluster_net_parent_id(g_vpr_ctx.atom().lookup, net_id, is_flat);
         if (!route_ctx.route_trees[parent_id])
             continue;
-        for (auto& rt_node : route_ctx.route_trees[parent_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[parent_id].value().all_nodes()) {
             t_rr_node_power* node_power = &rr_node_power[size_t(rt_node.inode)];
 
             if (node_power->visited) {

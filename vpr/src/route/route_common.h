@@ -20,6 +20,9 @@ void pathfinder_update_single_node_occupancy(int inode, int add_or_sub);
 
 void pathfinder_update_acc_cost_and_overuse_info(float acc_fac, OveruseInfo& overuse_info);
 
+/** Update pathfinder cost of all nodes rooted at rt_node, including rt_node itself */
+void pathfinder_update_cost_from_route_tree(const RouteTreeNode& rt_node, int add_or_sub);
+
 float update_pres_fac(float new_pres_fac);
 
 void reset_path_costs(const std::vector<int>& visited_rr_nodes);

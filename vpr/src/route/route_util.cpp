@@ -1,8 +1,6 @@
 #include "route_util.h"
 #include "globals.h"
 
-#include "route_tree_timing.h"
-
 vtr::Matrix<float> calculate_routing_usage(t_rr_type rr_type, bool is_flat) {
     VTR_ASSERT(rr_type == CHANX || rr_type == CHANY);
 
@@ -20,7 +18,7 @@ vtr::Matrix<float> calculate_routing_usage(t_rr_type rr_type, bool is_flat) {
 
         if (!route_ctx.route_trees[parent_id])
             continue;
-        for (auto& rt_node : route_ctx.route_trees[parent_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[parent_id].value().all_nodes()) {
             if (rr_graph.node_type(rt_node.inode) == rr_type) {
                 rr_nodes.insert(rt_node.inode);
             }

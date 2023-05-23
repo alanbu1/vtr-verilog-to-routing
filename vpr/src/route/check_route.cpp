@@ -16,7 +16,6 @@
 #include "check_rr_graph.h"
 #include "read_xml_arch_file.h"
 #include "route_tree.h"
-#include "route_tree_timing.h"
 
 /******************** Subroutines local to this module **********************/
 static void check_node_and_range(RRNodeId inode,
@@ -115,7 +114,7 @@ void check_route(const Netlist<>& net_list,
         }
 
         /* Check the SOURCE of the net. */
-        RRNodeId source_inode = route_ctx.route_trees[net_id].value().root.inode;
+        RRNodeId source_inode = route_ctx.route_trees[net_id].value().root().inode;
         check_node_and_range(source_inode, route_type, is_flat);
         check_source(net_list, source_inode, net_id, is_flat);
 
@@ -123,7 +122,7 @@ void check_route(const Netlist<>& net_list,
 
         /* Check the rest of the net */
         size_t num_sinks = 0;
-        for (auto& rt_node : route_ctx.route_trees[net_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[net_id].value().all_nodes()) {
             RRNodeId inode = rt_node.inode;
             int net_pin_index = rt_node.net_pin_index;
             check_node_and_range(inode, route_type, is_flat);
@@ -487,7 +486,7 @@ void recompute_occupancy_from_scratch(const Netlist<>& net_list, bool is_flat) {
         if (net_list.net_is_ignored(net_id)) /* Skip ignored nets. */
             continue;
 
-        for (auto& rt_node : route_ctx.route_trees[net_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[net_id].value().all_nodes()) {
             size_t inode = size_t(rt_node.inode);
             route_ctx.rr_node_route_inf[inode].set_occ(route_ctx.rr_node_route_inf[inode].occ() + 1);
         }
@@ -609,7 +608,7 @@ static bool check_non_configurable_edges(const Netlist<>& net_list,
     // Collect all the edges used by this net's routing
     std::set<t_node_edge> routing_edges;
     std::set<int> routing_nodes;
-    for (auto& rt_node : route_ctx.route_trees[net].value()) {
+    for (auto& rt_node : route_ctx.route_trees[net].value().all_nodes()) {
         routing_nodes.insert(size_t(rt_node.inode));
         if (!rt_node.parent)
             continue;
@@ -770,7 +769,7 @@ class StubFinder {
     }
 
   private:
-    bool RecurseTree(RouteTreeNode& rt_node);
+    bool RecurseTree(const RouteTreeNode& rt_node);
 
     // Set of stub nodes
     // Note this is an ordered set so that node output is sorted by node
@@ -813,13 +812,13 @@ bool StubFinder::CheckNet(ParentNetId net) {
     if (!route_ctx.route_trees[net])
         return false;
 
-    RecurseTree(route_ctx.route_trees[net].value().root);
+    RecurseTree(route_ctx.route_trees[net].value().root());
 
     return !stub_nodes_.empty();
 }
 
 // Returns true if this node is a stub.
-bool StubFinder::RecurseTree(RouteTreeNode& rt_node) {
+bool StubFinder::RecurseTree(const RouteTreeNode& rt_node) {
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
 

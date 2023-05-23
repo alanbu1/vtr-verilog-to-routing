@@ -5,7 +5,6 @@
 #include "atom_netlist_fwd.h"
 #include "atom_lookup.h"
 #include "AnalysisDelayCalculator.h"
-#include "route_tree_timing.h"
 
 class VprTimingGraphResolver : public tatum::TimingGraphNameResolver {
   public:

@@ -3,8 +3,6 @@
 #include <fstream>
 #include "vtr_log.h"
 
-#include "route_tree_timing.h"
-
 /**
  * @brief Definitions of global and helper routines related to printing RR node overuse info.
  *
@@ -175,7 +173,7 @@ void generate_overused_nodes_to_congested_net_lookup(const Netlist<>& net_list,
         if (!route_ctx.route_trees[net_id])
             continue;
 
-        for (auto& rt_node : route_ctx.route_trees[net_id].value()) {
+        for (auto& rt_node : route_ctx.route_trees[net_id].value().all_nodes()) {
             RRNodeId inode = rt_node.inode;
             int overuse = route_ctx.rr_node_route_inf[size_t(inode)].occ() - rr_graph.node_capacity(inode);
             if (overuse > 0) {
@@ -195,7 +193,7 @@ static void generate_node_to_net_lookup(const Netlist<>& net_list,
         if (!route_ctx.route_trees[net_id])
             continue;
 
-        for (const RouteTreeNode& rt_node : route_ctx.route_trees[net_id].value()) {
+        for (const RouteTreeNode& rt_node : route_ctx.route_trees[net_id].value().all_nodes()) {
             rr_node_to_net_map[rt_node.inode].insert(net_id);
         }
     }
