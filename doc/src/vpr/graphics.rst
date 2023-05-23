@@ -226,7 +226,7 @@ The manual moves feature allows the user to specify the next move in placement. 
 .. figure:: https://www.verilogtorouting.org/img/manual_move_toggle_button.png
    :align: center
 
-To enable the feature, activate the Manual Move toggle button and press Proceed. Alternatively, the user can active the Manual Move toggle button and click on the block to be moved.
+To enable the feature, activate the Manual Move toggle button and press Proceed. Alternatively, the user can activate the Manual Move toggle button and click on the block to be moved.
 
 .. figure:: https://www.verilogtorouting.org/img/draw_manual_moves_window.png
    :align: center
