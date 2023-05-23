@@ -9,7 +9,7 @@
 RouteTreeNode::RouteTreeNode(RRNodeId _inode, RRSwitchId _parent_switch, vtr::optional<RouteTreeNode&> _parent)
     : inode(_inode)
     , parent_switch(_parent_switch)
-    , parent(_parent){
+    , parent(_parent) {
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
 
@@ -154,7 +154,7 @@ void RouteTreeNode::print_x(int depth) const {
     VTR_LOG("\n");
 
     for (auto& child : _child_nodes) {
-        child.print_x(depth+1);
+        child.print_x(depth + 1);
     }
 }
 
@@ -164,7 +164,7 @@ RouteTree::RouteTree(RRNodeId _inode)
     _rr_node_to_rt_node[_inode] = _root;
 }
 
-inline RRNodeId get_source_of_net(ParentNetId inet){
+inline RRNodeId get_source_of_net(ParentNetId inet) {
     auto& route_ctx = g_vpr_ctx.routing();
     return RRNodeId(route_ctx.net_rr_terminals[inet][0]);
 }
@@ -176,7 +176,7 @@ RouteTree::RouteTree(ParentNetId _inet)
 
 /** Move existing RouteTreeNode into a RouteTree */
 RouteTree::RouteTree(RouteTreeNode&& root)
-    : _root(std::move(root)){
+    : _root(std::move(root)) {
     _rr_node_to_rt_node[_root.inode] = _root;
     update_references(_root);
 }
@@ -227,14 +227,13 @@ void RouteTree::update_references(RouteTreeNode& rt_node) {
 }
 
 /** Reload timing values (R_upstream, C_downstream, Tdel).
-* Can take a RouteTreeNode& to do an incremental update.
-* Note that update_from_heap already calls this. */
-void
-RouteTree::reload_timing(vtr::optional<RouteTreeNode&> from_node){
+ * Can take a RouteTreeNode& to do an incremental update.
+ * Note that update_from_heap already calls this. */
+void RouteTree::reload_timing(vtr::optional<RouteTreeNode&> from_node) {
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
 
-    if(!from_node)
+    if (!from_node)
         from_node = _root;
 
     // Propagate R_upstream down into the new subtree
@@ -262,7 +261,7 @@ RouteTree::reload_timing(vtr::optional<RouteTreeNode&> from_node){
 }
 
 /** Sets the R_upstream values of all the nodes in the new path to the
-* correct value by traversing down to SINK from from_node. */
+ * correct value by traversing down to SINK from from_node. */
 void RouteTree::load_new_subtree_R_upstream(RouteTreeNode& rt_node) {
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
@@ -292,7 +291,7 @@ void RouteTree::load_new_subtree_R_upstream(RouteTreeNode& rt_node) {
 }
 
 /** Sets the R_upstream values of all the nodes in the new path to the
-* correct value by traversing down to SINK from from_node. */
+ * correct value by traversing down to SINK from from_node. */
 float RouteTree::load_new_subtree_C_downstream(RouteTreeNode& from_node) {
     float C_downstream = 0.;
 
@@ -301,8 +300,8 @@ float RouteTree::load_new_subtree_C_downstream(RouteTreeNode& from_node) {
     C_downstream += rr_graph.node_C(from_node.inode);
     for (auto& child : from_node.child_nodes()) {
         /* When switches such as multiplexers and tristate buffers are enabled, their fanout
-        * produces an "internal capacitance". We account for this internal capacitance of the
-        * switch by adding it to the total capacitance of the node. */
+         * produces an "internal capacitance". We account for this internal capacitance of the
+         * switch by adding it to the total capacitance of the node. */
         C_downstream += rr_graph.rr_switch_inf(child.parent_switch).Cinternal;
         float C_downstream_child = load_new_subtree_C_downstream(child);
         if (!rr_graph.rr_switch_inf(child.parent_switch).buffered()) {
@@ -315,9 +314,9 @@ float RouteTree::load_new_subtree_C_downstream(RouteTreeNode& from_node) {
 }
 
 /** Update the C_downstream values for the ancestors of from_node. Once
-* a buffered switch is found amongst the ancestors, no more ancestors are
-* affected. Returns the root of the "unbuffered subtree" whose Tdel
-* values are affected by the new path's addition. */
+ * a buffered switch is found amongst the ancestors, no more ancestors are
+ * affected. Returns the root of the "unbuffered subtree" whose Tdel
+ * values are affected by the new path's addition. */
 RouteTreeNode&
 RouteTree::update_unbuffered_ancestors_C_downstream(RouteTreeNode& from_node) {
     auto& device_ctx = g_vpr_ctx.device();
@@ -365,11 +364,10 @@ RouteTree::update_unbuffered_ancestors_C_downstream(RouteTreeNode& from_node) {
 }
 
 /** Updates the Tdel values of the subtree rooted at rt_node by
-* by calling itself recursively. The C_downstream values of all the nodes
-* must be correct before this routine is called. Tarrival is the time at
-* at which the signal arrives at this node's *input*. */
-void
-RouteTree::load_route_tree_Tdel(RouteTreeNode& from_node, float Tarrival) {
+ * by calling itself recursively. The C_downstream values of all the nodes
+ * must be correct before this routine is called. Tarrival is the time at
+ * at which the signal arrives at this node's *input*. */
+void RouteTree::load_route_tree_Tdel(RouteTreeNode& from_node, float Tarrival) {
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
 
@@ -401,10 +399,10 @@ vtr::optional<RouteTreeNode&> RouteTree::find_by_rr_id(RRNodeId rr_node) const {
 }
 
 /** Check the consistency of this route tree. Looks for:
-* - invalid parent-child links
-* - invalid timing values
-* - congested SINKs
-* Returns true if OK. */
+ * - invalid parent-child links
+ * - invalid timing values
+ * - congested SINKs
+ * Returns true if OK. */
 bool RouteTree::is_valid(void) const {
     return is_valid_x(_root);
 }
@@ -480,7 +478,7 @@ bool RouteTree::is_valid_x(const RouteTreeNode& rt_node) const {
 }
 
 /** Check if the tree has any overused nodes (-> the tree is congested).
-* Returns true if not congested */
+ * Returns true if not congested */
 bool RouteTree::is_uncongested(void) const {
     return is_uncongested_x(_root);
 }
@@ -506,7 +504,6 @@ bool RouteTree::is_uncongested_x(const RouteTreeNode& rt_node) const {
 
     // The sub-tree below the current node is uncongested
     return true;
-
 }
 
 /** Print information about this route tree to stdout. */
@@ -515,11 +512,11 @@ void RouteTree::print(void) const {
 }
 
 /** Add the most recently finished wire segment to the routing tree, and
-* update the Tdel, etc. numbers for the rest of the routing tree. hptr
-* is the heap pointer of the SINK that was reached, and target_net_pin_index
-* is the net pin index corresponding to the SINK that was reached. This routine
-* returns a tuple: RouteTreeNode of the branch it adds to the route tree and
-* RouteTreeNode of the SINK it adds to the routing. */
+ * update the Tdel, etc. numbers for the rest of the routing tree. hptr
+ * is the heap pointer of the SINK that was reached, and target_net_pin_index
+ * is the net pin index corresponding to the SINK that was reached. This routine
+ * returns a tuple: RouteTreeNode of the branch it adds to the route tree and
+ * RouteTreeNode of the SINK it adds to the routing. */
 std::tuple<vtr::optional<RouteTreeNode&>, vtr::optional<RouteTreeNode&>>
 RouteTree::update_from_heap(t_heap* hptr, int target_net_pin_index, SpatialRouteTreeLookup* spatial_rt_lookup, bool is_flat) {
     auto& device_ctx = g_vpr_ctx.device();
@@ -637,9 +634,9 @@ RouteTree::add_subtree_from_heap(t_heap* hptr, int target_net_pin_index, bool is
 
 /** Add non-configurable nodes reachable from rt_node to the tree. */
 void RouteTree::add_non_configurable_nodes(RouteTreeNode& rt_node,
-                                            bool reached_by_non_configurable_edge,
-                                            std::unordered_set<RRNodeId>& visited,
-                                            bool is_flat) {
+                                           bool reached_by_non_configurable_edge,
+                                           std::unordered_set<RRNodeId>& visited,
+                                           bool is_flat) {
     if (visited.count(rt_node.inode) && reached_by_non_configurable_edge)
         return;
 
@@ -680,7 +677,6 @@ void RouteTree::add_non_configurable_nodes(RouteTreeNode& rt_node,
  * Note: does not update R_upstream/C_downstream */
 vtr::optional<RouteTree&>
 RouteTree::prune(CBRR& connections_inf, std::vector<int>* non_config_node_set_usage) {
-
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
     auto& route_ctx = g_vpr_ctx.routing();
@@ -702,7 +698,6 @@ RouteTree::prune(CBRR& connections_inf, std::vector<int>* non_config_node_set_us
  * Returns nullopt if pruned */
 vtr::optional<RouteTreeNode&>
 RouteTree::prune_x(RouteTreeNode& rt_node, CBRR& connections_inf, bool force_prune, std::vector<int>* non_config_node_set_usage) {
-
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
     auto& route_ctx = g_vpr_ctx.routing();
@@ -861,14 +856,12 @@ RouteTree::prune_x(RouteTreeNode& rt_node, CBRR& connections_inf, bool force_pru
 /** Remove all sinks and mark the remaining nodes as un-expandable.
  * This is used after routing a clock net.
  * TODO: is this function doing anything? Try running without it */
-void
-RouteTree::freeze(void) {
+void RouteTree::freeze(void) {
     return freeze_x(_root);
 }
 
 /** Helper function for freeze. */
-void
-RouteTree::freeze_x(RouteTreeNode& rt_node){
+void RouteTree::freeze_x(RouteTreeNode& rt_node) {
     auto& device_ctx = g_vpr_ctx.device();
     const auto& rr_graph = device_ctx.rr_graph;
 

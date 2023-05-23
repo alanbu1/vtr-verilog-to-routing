@@ -882,7 +882,6 @@ void ConnectionRouter<Heap>::add_route_tree_to_heap(
     int target_node,
     const t_conn_cost_params cost_params,
     bool from_high_fanout) {
-
     /* Puts the entire partial routing below and including rt_node onto the heap *
      * (except for those parts marked as not to be expanded) by calling itself   *
      * recursively.                                                              */
