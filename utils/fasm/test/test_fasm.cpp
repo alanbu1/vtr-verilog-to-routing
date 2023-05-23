@@ -590,7 +590,7 @@ TEST_CASE("fasm_integration_test", "[fasm]") {
         if(!root)
             continue;
 
-        for(auto& rt_node: root.value()) {
+        for(auto& rt_node: root.value().all_nodes()) {
             for(auto& child_node: rt_node.child_nodes()){
                 auto iter = routing_edges.find(std::make_tuple(size_t(rt_node.inode), size_t(child_node.inode), size_t(child_node.parent_switch)));
                 if (iter == routing_edges.end()) {
